@@ -141,5 +141,6 @@ cython_debug/
 
 
 credentials/
+credentials/nbar.json
 
 data/
