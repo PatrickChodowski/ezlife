@@ -80,7 +80,7 @@ class GBQ:
         df = pd.DataFrame(row_list)
         return df
 
-    def _get_table_schema(self, dataset_id: str, table_id: str) -> pd.DataFrame:
+    def get_table_schema(self, dataset_id: str, table_id: str) -> pd.DataFrame:
         """
         gets structure of gbq table
         :param: dataset - dataset name
@@ -108,7 +108,7 @@ class GBQ:
         :param dataset_id: dataset id
         :param table_id: table id
         """
-        table_schema = self._get_table_schema(dataset_id, table_id)
+        table_schema = self.get_table_schema(dataset_id, table_id)
         table_path = f"{self.project_id}.{dataset_id}.{table_id}"
         schema_list = list()
 
