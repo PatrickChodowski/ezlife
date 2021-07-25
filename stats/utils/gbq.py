@@ -5,8 +5,6 @@ from google.cloud import bigquery
 from google.oauth2 import service_account
 
 
-# gbq.drop_table('live_ballr.training_runs')
-# gbq.send_query_from_file(file=_PATH+'/queries/create_training_runs.sql')
 
 class GBQ:
     def __init__(self,

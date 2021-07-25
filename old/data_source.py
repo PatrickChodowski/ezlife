@@ -4,7 +4,7 @@ import re
 from .utils import GBQ, get_logger
 
 
-class DataSource:
+class _DataSource:
     def __init__(self,
                  csv_local_path: str = None,
                  bigquery_path: str = None,
