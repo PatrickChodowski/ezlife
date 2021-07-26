@@ -1,24 +1,7 @@
 import logging
 from typing import List, Tuple, Dict
 import numpy as np
-
-
-OPERAND_MAP = {'eq': '=',
-               'ne': '!=',
-               'gt': '>',
-               'lt': '<',
-               'ge': '>=',
-               'le': '<=',
-               'in': 'IN',
-               'nin': 'NOT IN'}
-
-AGGR_MAP = {"avg": "AVG(__metric__)",
-            "sum": "SUM(__metric__)",
-            "min": "MIN(__metric__)",
-            "max": "MAX(__metric__)",
-            "count": "COUNT(__metric__)",
-            "count_distinct": "COUNT(DISTINCT __metric__)",
-            "count_nulls": "SUM(CASE WHEN __metric__ IS NULL THEN 1 ELSE 0 END)"}
+from .utils import WINDOW_AGGRS, OPERAND_MAP, AGGR_MAP
 
 
 class _QueryBuilder:
@@ -290,6 +273,8 @@ class _QueryBuilder:
     def _aggr_data(self) -> Tuple[str, str]:
         """
         Creates SELECT and GROUP BY strings based on self.dimensions, self.metrics and aggregation params
+        Its the ugliest method as it has to check a lot of if-else branches
+        (Is it a window function? Are there dimensions? Do we need distinct? Do we need partitions?)
 
         I tried to make it so it handles any combination of:
             - single, multiple or none dimensions
@@ -297,23 +282,42 @@ class _QueryBuilder:
             - different aggregations (for now having very simple ones)
         :return: Tuple of select string, group by string
         """
+        # check if dimensions are provided
         if self.dimensions is not None:
             dim_str = ','.join(self.dimensions)
             comma_str = ", "
-            group_by_pre_str = "GROUP BY "
+
+            if self.aggregation in WINDOW_AGGRS:
+                # have to handle window aggregations (like median) different way
+                partition_by_str = f" OVER(PARTITION BY {dim_str}) "
+                group_by_str = ""
+            else:
+                # classic group by
+                group_by_str = f" GROUP BY {dim_str} "
+                partition_by_str = ""
         else:
             dim_str = ""
             comma_str = ""
-            group_by_pre_str = ""
+            group_by_str = ""
+            partition_by_str = " OVER() "
 
         if self.aggregation is not None:
             self.logger.info(f"Grouping {self.metrics} by {self.dimensions}. Aggregation: {self.aggregation}")
             aggr_str = AGGR_MAP[self.aggregation]
-            group_by_str = f" {group_by_pre_str}{dim_str} "
+
+            # if there are dimensions it will replace with OVER(PARTITION BY ) otherwise with OVER()
+            if self.aggregation in WINDOW_AGGRS:
+                aggr_str = aggr_str.replace("__over__", partition_by_str)
+                # needed to return non duplicated rows with WINDOW ARGS
+                distinct_str = " DISTINCT "
+            else:
+                distinct_str = ""
+
             metrics_str = ', '.join([f"{aggr_str.replace('__metric__', m)} AS {m}" for m in self.metrics])
 
-            select_values_str = f" {dim_str}{comma_str}{metrics_str} "
+            select_values_str = f" {distinct_str}{dim_str}{comma_str}{metrics_str} "
             return select_values_str, group_by_str
+
         else:
             not_aggr_metrics_str = ','.join(self.metrics)
             group_by_str = ''

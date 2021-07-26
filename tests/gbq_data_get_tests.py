@@ -196,4 +196,62 @@ class GBQDataGetTests(unittest.TestCase):
                    aggregation='count_nulls')
         assert isinstance(self.g.get(), pd.DataFrame)
 
+    def test_simple_array_agg_dimension(self):
+        self.g.set(dimensions=['team_abbreviation'],
+                   metrics=['player_name'],
+                   aggregation='array_agg')
+        assert isinstance(self.g.get(), pd.DataFrame)
 
+    def test_simple_array_agg_distinct_dimension(self):
+        self.g.set(dimensions=['team_abbreviation'],
+                   metrics=['player_name'],
+                   aggregation='array_agg_distinct')
+        assert isinstance(self.g.get(), pd.DataFrame)
+
+    def test_simple_array_agg_no_dimension(self):
+        self.g.set(dimensions=None,
+                   metrics=['player_name'],
+                   aggregation='array_agg')
+        assert isinstance(self.g.get(), pd.DataFrame)
+
+    def test_simple_array_agg_distinct_no_dimension(self):
+        self.g.set(dimensions=None,
+                   metrics=['player_name'],
+                   aggregation='array_agg_distinct')
+        assert isinstance(self.g.get(), pd.DataFrame)
+
+    def test_simple_string_agg_dimension(self):
+        self.g.set(dimensions=['team_abbreviation'],
+                   metrics=['player_name'],
+                   aggregation='string_agg')
+        assert isinstance(self.g.get(), pd.DataFrame)
+
+    def test_simple_string_agg_distinct_dimension(self):
+        self.g.set(dimensions=['team_abbreviation'],
+                   metrics=['player_name'],
+                   aggregation='string_agg_distinct')
+        assert isinstance(self.g.get(), pd.DataFrame)
+
+    def test_simple_median_dimension(self):
+        self.g.set(dimensions=['team_abbreviation'],
+                   metrics=['pts'],
+                   aggregation='median')
+        assert isinstance(self.g.get(), pd.DataFrame)
+
+    def test_simple_median_no_dimension(self):
+        self.g.set(dimensions=None,
+                   metrics=['pts'],
+                   aggregation='median')
+        assert isinstance(self.g.get(), pd.DataFrame)
+
+    def test_simple_q3_dimension(self):
+        self.g.set(dimensions=['team_abbreviation'],
+                   metrics=['pts'],
+                   aggregation='q3')
+        assert isinstance(self.g.get(), pd.DataFrame)
+
+    def test_simple_q3_no_dimension(self):
+        self.g.set(dimensions=None,
+                   metrics=['pts'],
+                   aggregation='q3')
+        assert isinstance(self.g.get(), pd.DataFrame)
