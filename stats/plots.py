@@ -12,7 +12,8 @@ class _Plots:
     """
     Class name with _ as its not supposed to be called directly
 
-    Takes parameters about data, plot_type and additional plot settings.
+    Takes parameters about df, dimensions, metrics and aggregations
+    Later will pass kwargs for plot specific settings
 
     Returns pandas-matplotlib plot object
     """
@@ -41,7 +42,6 @@ class _Plots:
         if self.dimensions.__len__() > 1:
             x = 'group'
             self.df[x] = self.df[self.dimensions].agg('-'.join, axis=1)
-
         else:
             # if not, just using provided dimension
             x = self.dimensions[0]
@@ -82,19 +82,34 @@ class _Plots:
     def boxplot(self) -> None:
         """
         Since I am pre-calculating statistics, I got to draw boxplot manually :) <- hold the pain face
+
+        Boxplot requires median, q1 and q3 to be added to aggregations
         """
 
-        x, y = self._prep_x_y()
-        groups = set(self.df[x].values)
+        if ('median' not in self.aggregations) | ('q1' not in self.aggregations) | ('q3' not in self.aggregations):
+            raise BoxplotMissingAggregationsException("Boxplot requires Q1, Median and Q3 in aggregations")
+
+        if self.dimensions.__len__() > 1:
+            x = 'group'
+            self.df[x] = self.df[self.dimensions].agg('-'.join, axis=1)
+        else:
+            # if not, just using provided dimension
+            x = self.dimensions[0]
+
+        # picking first metric
+        y = self.metrics[0]
+
+        self.df[f'iqr_{y}'] = self.df[f'q3_{y}'] - self.df[f'q1_{y}']
+        groups = self.df[[x, f'q1_{y}', f'median_{y}', f'q3_{y}', f'iqr_{y}']].to_dict('records')
         stats = list()
         for group in groups:
             group_dict = {
-                "label": group,
-                "med": 5.5,
-                "q1": 3.5,
-                "q3": 7.5,
-                "whislo": 2.0,  # required
-                "whishi": 8.0,  # required
+                "label": group[x],
+                "med":  group[f'median_{y}'],
+                "q1": group[f'q1_{y}'],
+                "q3": group[f'q3_{y}'],
+                "whislo": (group[f'q1_{y}'] - (1.5*group[f'iqr_{y}'])),  # required
+                "whishi":  (group[f'q3_{y}'] + (1.5*group[f'iqr_{y}'])),  # required
                 "fliers": []  # required if showfliers=True
             }
             stats.append(group_dict)
@@ -115,3 +130,7 @@ class _Plots:
         for t in set(itertools.product(self.aggregations, self.metrics)):
             possible_metrics.append(f"{t[0]}_{t[1]}")
         return possible_metrics
+
+
+class BoxplotMissingAggregationsException(Exception):
+    pass
