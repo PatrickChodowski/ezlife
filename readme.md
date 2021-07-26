@@ -2,8 +2,21 @@
 ### Stats
 Small personal library for sending quick queries to GBQ and getting back aggregates for pandas plots
 
+### how to install:
+pip:
 
-Usage:
+```commandline
+pip3 install git+https://github.com/PatrickChodowski/stats.git/main
+```
+
+poetry:
+```commandline
+poetry add git+https://github.com/PatrickChodowski/stats.git/main
+```
+
+
+
+### Usage:
 
 ```python
 from stats.gbq_data import GBQData
