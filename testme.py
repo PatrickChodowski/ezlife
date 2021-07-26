@@ -10,4 +10,4 @@ if __name__ == '__main__':
           sort=('pts', 'desc'),
           filters=[('team_abbreviation', 'eq', 'GUA')],
           limit=30)
-    g.get('')
+    g.get()

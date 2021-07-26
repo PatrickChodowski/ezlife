@@ -112,7 +112,7 @@ class GBQData:
 
         self.query = self.query_builder.glue_query()
 
-    def get(self, what: str) -> pd.DataFrame:
+    def get(self, what: str = None) -> pd.DataFrame:
         """
         What - either numbers or plot
         :param what:
@@ -120,7 +120,6 @@ class GBQData:
         """
         df = self.gbq.get_data(query=self.query)
         return df
-
 
 
 class GBQWrongPathPatternException(Exception):
