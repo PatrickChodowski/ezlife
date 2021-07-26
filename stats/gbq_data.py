@@ -90,8 +90,9 @@ class GBQData:
             dimensions: List[str] = None,
             metrics: List[str] = None,
             aggregation: str = None,
-            sort: str = None,
-            filters: List[Tuple[str, str, None]] = None
+            sort: Tuple[str, str] = None,
+            filters: List[Tuple] = None,
+            limit: int = None
             ) -> None:
         """
         Sets data params to query builder
@@ -107,7 +108,8 @@ class GBQData:
                                            metrics=metrics,
                                            aggregation=aggregation,
                                            sort=sort,
-                                           filters=filters)
+                                           filters=filters,
+                                           limit=limit)
 
         self.query = self.query_builder.glue_query()
 

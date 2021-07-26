@@ -24,8 +24,9 @@ class _QueryBuilder:
                  dimensions: List[str] = None,
                  metrics: List[str] = None,
                  aggregation: str = None,
-                 sort: str = None,
-                 filters: list = None
+                 sort: Tuple[str, str] = None,
+                 filters: List[Tuple] = None,
+                 limit: int = None
                  ):
         """
         Class name with _ as its not supposed to be called directly
@@ -44,15 +45,11 @@ class _QueryBuilder:
         self.sort = sort
         self.logger = logger
         self.filters = filters
-
+        self.limit = limit
 
     @property
     def aggregation(self):
         return self._aggregation
-
-    @property
-    def sort(self):
-        return self._sort
 
     @property
     def dimensions(self):
@@ -62,19 +59,16 @@ class _QueryBuilder:
     def metrics(self):
         return self._metrics
 
+    @property
+    def limit(self):
+        return self._limit
+
     @aggregation.setter
     def aggregation(self, aggregation):
         if aggregation is not None:
             if aggregation not in AGGR_TYPES:
                 raise WrongAggregationException(f"Aggregation {aggregation} has invalid value. Use one of {AGGR_TYPES}")
         self._aggregation = aggregation
-
-    @sort.setter
-    def sort(self, sort):
-        if sort is not None:
-            if sort not in ['asc', 'desc']:
-                raise WrongSortException(f"Sort {sort} has invalid value. Use one of ['asc','desc']")
-        self._sort = sort
 
     @dimensions.setter
     def dimensions(self, dimensions):
@@ -104,6 +98,17 @@ class _QueryBuilder:
                 if y not in self.cols:
                     raise WrongFieldName(f"Y Field {y} not in data source columns")
         self._metrics = metrics
+
+    @limit.setter
+    def limit(self, limit):
+        if not None:
+            if not isinstance(limit, (int, np.int)):
+                raise WrongLimitValue("Limit has to be of INT type")
+
+            if limit <= 0:
+                raise WrongLimitValue("Limit value has to be at least 1 or empty")
+
+        self._limit = limit
 
     def _filter_data(self) -> List[str]:
         # column_name
@@ -182,9 +187,26 @@ class _QueryBuilder:
 
     def _sort_data(self) -> str:
         if self.sort is not None:
-            self.logger.info(f"Sorting {self.sort} by {self.y}")
-            sort_by_str = f" ORDER BY {self.y} {self.sort.upper()} "
-            return sort_by_str
+
+            if not isinstance(self.sort, tuple):
+                raise WrongSortException(f"Sort has to be Tuple(column_name, asc/desc)")
+
+            if self.sort.__len__() != 2:
+                raise WrongSortException(f"Sort has {self.sort.__len__()} elements. Should have 2: column and asc/desc")
+
+            if self.sort[1] not in ['asc', 'desc']:
+                raise WrongSortException(f"Invalid sort value ({self.sort[1]}). It has to be one of ['asc','desc']")
+
+            if self.sort[0] not in self.cols:
+                raise WrongSortFieldNameException(f"Invalid sort column ({self.sort[0]}). Not found in columns")
+
+            return f" ORDER BY {self.sort[0]} {self.sort[1].upper()} "
+        else:
+            return ''
+
+    def _limit_data(self) -> str:
+        if self.limit is not None:
+            return f"LIMIT {self.limit}"
         else:
             return ''
 
@@ -192,6 +214,7 @@ class _QueryBuilder:
         list_of_str_filters = self._filter_data()
         group_by_str, select_val_str = self._aggr_data()
         sort_by_str = self._sort_data()
+        limit_str = self._limit_data()
 
         filter_str = "".join(list_of_str_filters)
 
@@ -201,11 +224,16 @@ class _QueryBuilder:
         WHERE 1=1
             {filter_str} 
             {group_by_str} 
-            {sort_by_str}"""
+            {sort_by_str}
+            {limit_str}"""
         self.logger.info("Final query: ")
         self.logger.info(query)
 
         return query
+
+
+class WrongLimitValue(Exception):
+    pass
 
 
 class WrongAggregationException(Exception):
@@ -217,6 +245,10 @@ class WrongOperandException(Exception):
 
 
 class WrongSortException(Exception):
+    pass
+
+
+class WrongSortFieldNameException(Exception):
     pass
 
 
