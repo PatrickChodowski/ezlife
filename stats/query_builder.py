@@ -12,12 +12,13 @@ OPERAND_MAP = {'eq': '=',
                'in': 'IN',
                'nin': 'NOT IN'}
 
-AGGR_MAP = {"avg": "AVG(",
-            "sum": "SUM(",
-            "min": "MIN(",
-            "max": "MAX(",
-            "count": "COUNT(",
-            "count_distinct": "COUNT(DISTINCT "}
+AGGR_MAP = {"avg": "AVG(__metric__)",
+            "sum": "SUM(__metric__)",
+            "min": "MIN(__metric__)",
+            "max": "MAX(__metric__)",
+            "count": "COUNT(__metric__)",
+            "count_distinct": "COUNT(DISTINCT __metric__)",
+            "count_nulls": "SUM(CASE WHEN __metric__ IS NULL THEN 1 ELSE 0 END)"}
 
 
 class _QueryBuilder:
@@ -309,7 +310,7 @@ class _QueryBuilder:
             self.logger.info(f"Grouping {self.metrics} by {self.dimensions}. Aggregation: {self.aggregation}")
             aggr_str = AGGR_MAP[self.aggregation]
             group_by_str = f" {group_by_pre_str}{dim_str} "
-            metrics_str = ', '.join([f"{aggr_str}{m}) AS {m}" for m in self.metrics])
+            metrics_str = ', '.join([f"{aggr_str.replace('__metric__', m)} AS {m}" for m in self.metrics])
 
             select_values_str = f" {dim_str}{comma_str}{metrics_str} "
             return select_values_str, group_by_str
