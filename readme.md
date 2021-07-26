@@ -11,7 +11,7 @@ pip3 install git+https://github.com/PatrickChodowski/stats.git
 
 poetry:
 ```commandline
-poetry add "git+https://github.com/PatrickChodowski/stats.git"
+poetry add "git+https://github.com/PatrickChodowski/stats.git#main"
 ```
 
 
