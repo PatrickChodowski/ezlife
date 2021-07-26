@@ -26,8 +26,8 @@ g = GBQData(gbq_path='project.dataset.table',
 
 g.set(dimensions=['team_abbreviation', 'player_name'],
       metrics=['pts'],
-      aggregation='count',
-      sort=('pts', 'desc'),
+      aggregations=['sum'],
+      sort=('sum_pts', 'desc'),
       filters=[('team_abbreviation', 'eq', 'GUA')],
       limit=30)
 g.get()

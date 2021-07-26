@@ -29,4 +29,4 @@ AGGR_MAP = {"avg": "AVG(__metric__)",
 
 WINDOW_AGGRS = ["q1", "median", "q3", "stdev", "var"]
 
-PLOT_TYPES = ["bar"]
+PLOT_TYPES = ["bar", "barh", "boxplot"]

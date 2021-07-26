@@ -2,6 +2,7 @@ from .utils import WINDOW_AGGRS, OPERAND_MAP, AGGR_MAP
 import logging
 from typing import List, Tuple, Dict
 import numpy as np
+import itertools
 
 
 class _QueryBuilder:
@@ -13,7 +14,7 @@ class _QueryBuilder:
                  logger: logging.Logger,
                  dimensions: List[str] = None,
                  metrics: List[str] = None,
-                 aggregation: str = None,
+                 aggregations: List[str] = None,
                  sort: Tuple[str, str] = None,
                  filters: List[Tuple] = None,
                  limit: int = None
@@ -42,7 +43,9 @@ class _QueryBuilder:
         # query parameters
         self.dimensions = dimensions
         self.metrics = metrics
-        self.aggregation = aggregation
+        self.aggregations = aggregations
+        self.possible_sorters = self._get_possible_sorters()
+
         self.sort = sort
         self.logger = logger
         self.filters = filters
@@ -50,8 +53,8 @@ class _QueryBuilder:
 
     # properties:
     @property
-    def aggregation(self):
-        return self._aggregation
+    def aggregations(self):
+        return self._aggregations
 
     @property
     def dimensions(self):
@@ -74,20 +77,32 @@ class _QueryBuilder:
         return self._sort
 
     # setters:
-    @aggregation.setter
-    def aggregation(self, aggregation):
+    @aggregations.setter
+    def aggregations(self, aggregations):
         """
-        Aggregation checks:
+        Aggregations checks:
+        - have to be a list of strings
+        - cant be empty list
         - cant be outside of AGGR_MAP
-        - cant be empty (at least for now)
+        - Window functions cant go together with non window functions
         """
-        if aggregation is None:
-            raise WrongAggregationException(f"Aggregation cant be empty")
+        if aggregations is None:
+            raise WrongAggregationException(f"Aggregations cant be empty")
 
-        if aggregation not in AGGR_MAP:
-            raise WrongAggregationException(f"""Aggregation {aggregation} has invalid value. 
-            Use one of {list(AGGR_MAP.keys())}""")
-        self._aggregation = aggregation
+        if not isinstance(aggregations, list):
+            raise WrongAggregationException(f"Aggregations have to be a list")
+
+        _window_aggrs = set(aggregations).intersection(set(WINDOW_AGGRS))
+        if (_window_aggrs.__len__() > 0) & (_window_aggrs.__len__() < aggregations.__len__()):
+            _non_window_aggrs = set(aggregations) - _window_aggrs
+            raise WrongAggregationException(f"""Window function based aggregations ({_window_aggrs})
+            cant go with non-window function based ones ({_non_window_aggrs}). Sorry, thats the limit""")
+
+        for aggr in aggregations:
+            if aggr not in AGGR_MAP:
+                raise WrongAggregationException(f"""Aggregation {aggr} has invalid value. 
+                Use one of {list(AGGR_MAP.keys())}""")
+        self._aggregations = aggregations
 
     @dimensions.setter
     def dimensions(self, dimensions):
@@ -216,10 +231,11 @@ class _QueryBuilder:
         Sort checks:
         - Can be empty
         - If not empty, it has to be a Tuple
-        - Tuple has to have 2 elements = column name and sort direction
+        - Tuple has to have 2 elements = (possible_sorter,sort direction)
         - Second element of tuple has to be either asc or desc
-        - First element of tuple has to be a column name and has to be in self.cols
-        - It also has to be in either self.dimensions or self.metrics
+        - First element of tuple has to be a dimension name or combination of aggr and metric name like aggr_metric
+        - Column name and has to be in self.cols
+        - Aggregation has to be in self.aggregations
         """
         if sort is not None:
 
@@ -232,12 +248,10 @@ class _QueryBuilder:
             if sort[1] not in ['asc', 'desc']:
                 raise WrongSortException(f"Invalid sort value ({sort[1]}). It has to be one of ['asc','desc']")
 
-            if sort[0] not in self.cols:
-                raise WrongSortFieldNameException(f"Invalid sort column ({sort[0]}). Not found in columns")
+            if sort[0] not in self.possible_sorters:
+                raise WrongSortFieldNameException(f"""Invalid sorter name ({sort[0]}). 
+                Not found in possible sorters ({self.possible_sorters})""")
 
-            if (sort[0] not in self.metrics) & (sort[0] not in self.dimensions):
-                raise WrongSortFieldNameException(f"""Invalid sort column ({sort[0]}). 
-                Not found in dimensions or metrics""")
         self._sort = sort
 
     # prepare query methods:
@@ -279,15 +293,18 @@ class _QueryBuilder:
         I tried to make it so it handles any combination of:
             - single, multiple or none dimensions
             - single or multiple metrics (empty metrics not allowed)
-            - different aggregations (for now having very simple ones)
+            - different aggregations
         :return: Tuple of select string, group by string
         """
+        # check if we are dealing with window functions
+        is_window_aggr = True if set(self.aggregations).intersection(set(WINDOW_AGGRS)).__len__() > 0 else False
+        distinct_str = " DISTINCT " if is_window_aggr else ""
+
         # check if dimensions are provided
         if self.dimensions is not None:
             dim_str = ','.join(self.dimensions)
             comma_str = ", "
-
-            if self.aggregation in WINDOW_AGGRS:
+            if is_window_aggr:
                 # have to handle window aggregations (like median) different way
                 partition_by_str = f" OVER(PARTITION BY {dim_str}) "
                 group_by_str = ""
@@ -301,28 +318,23 @@ class _QueryBuilder:
             group_by_str = ""
             partition_by_str = " OVER() "
 
-        if self.aggregation is not None:
-            self.logger.info(f"Grouping {self.metrics} by {self.dimensions}. Aggregation: {self.aggregation}")
-            aggr_str = AGGR_MAP[self.aggregation]
+        self.logger.info(f"Grouping {self.metrics} by {self.dimensions}. Aggregations: {self.aggregations}")
+
+        # list for all aggregation x metric combinations
+        aggr_x_metrics_list = list()
+        for aggr in self.aggregations:
+            aggr_str = AGGR_MAP[aggr]
 
             # if there are dimensions it will replace with OVER(PARTITION BY ) otherwise with OVER()
-            if self.aggregation in WINDOW_AGGRS:
+            if is_window_aggr:
                 aggr_str = aggr_str.replace("__over__", partition_by_str)
-                # needed to return non duplicated rows with WINDOW ARGS
-                distinct_str = " DISTINCT "
-            else:
-                distinct_str = ""
 
-            metrics_str = ', '.join([f"{aggr_str.replace('__metric__', m)} AS {m}" for m in self.metrics])
+            metrics_str = ', '.join([f"{aggr_str.replace('__metric__', m)} AS {aggr}_{m}" for m in self.metrics])
+            aggr_x_metrics_list.append(metrics_str)
 
-            select_values_str = f" {distinct_str}{dim_str}{comma_str}{metrics_str} "
-            return select_values_str, group_by_str
-
-        else:
-            not_aggr_metrics_str = ','.join(self.metrics)
-            group_by_str = ''
-            select_values_str = f" {dim_str}{comma_str}{not_aggr_metrics_str} "
-            return select_values_str, group_by_str
+        metrics_str = ", ".join(aggr_x_metrics_list)
+        select_values_str = f" {distinct_str}{dim_str}{comma_str}{metrics_str} "
+        return select_values_str, group_by_str
 
     def _sort_data(self) -> str:
         """
@@ -371,6 +383,22 @@ class _QueryBuilder:
         self.logger.info(query)
 
         return query
+
+    def _get_possible_sorters(self) -> list:
+        """
+        Generates list of possible sorters
+        (dimensions + cartesian product of aggregations and metric)
+        :return: List of possible sorters
+        """
+        poss_sorts_list = list()
+        for t in set(itertools.product(self.aggregations, self.metrics)):
+            poss_sorts_list.append(f"{t[0]}_{t[1]}")
+
+        if self.dimensions is not None:
+            full_list = self.dimensions + poss_sorts_list
+            return full_list
+        else:
+            return poss_sorts_list
 
 
 class WrongLimitValue(Exception):
