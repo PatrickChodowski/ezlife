@@ -19,7 +19,7 @@ poetry add "git+https://github.com/PatrickChodowski/stats.git#main"
 ### Usage:
 
 ```python
-from stats.gbq_data import GBQData
+from stats import GBQData
 
 g = GBQData(gbq_path='project.dataset.table',
             sa_path='credentials/sa.json')
