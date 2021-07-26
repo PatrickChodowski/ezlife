@@ -6,7 +6,7 @@ setup(
     author='Patrick Chodowski',
     author_email='chodowski.patrick@gmail.com',
     packages=['stats'],
-    install_requires=['matplotlib', 'google-cloud-bigquery', 'google-cloud-storage', 'pandas'],
+    install_requires=['matplotlib', 'google-cloud-bigquery', 'pandas', 'numpy'],
     # *strongly* suggested for sharing
     version='0.5.4',
     license='GPLv3',
