@@ -17,3 +17,19 @@ class GBQDataPlotTests(unittest.TestCase):
                    filters=[('team_abbreviation', 'in', ['DEN', 'LAL', 'LAC', 'MIL', 'UTA'])])
         df = self.g.get(plot_type='bar')
         assert isinstance(self.g.get('bar'), pd.DataFrame)
+
+    def test_plot_bar_multi_dim_single_metric(self):
+        self.g.set(dimensions=['team_abbreviation', 'player_name'],
+                   metrics=['pts'],
+                   aggregation='median',
+                   sort=('pts', 'desc'),
+                   filters=[('team_abbreviation', 'in', ['DEN', 'LAL', 'LAC', 'MIL', 'UTA'])])
+        assert isinstance(self.g.get('bar'), pd.DataFrame)
+
+    def test_plot_bar_multi_dim_multi_metric(self):
+        self.g.set(dimensions=['team_abbreviation', 'player_name'],
+                   metrics=['pts', 'fga'],
+                   aggregation='median',
+                   sort=('pts', 'desc'),
+                   filters=[('team_abbreviation', 'in', ['DEN', 'LAL', 'LAC', 'MIL', 'UTA'])])
+        assert isinstance(self.g.get('bar'), pd.DataFrame)

@@ -147,7 +147,10 @@ class GBQData:
         # print(df.head())
 
         if plot_type in PLOT_TYPES:
-            self.plots = _Plots(df=df, x=self.dimensions[0], y=self.metrics[0])
+            self.plots = _Plots(df=df,
+                                dimensions=self.dimensions,
+                                metrics=self.metrics,
+                                logger=self.logger)
             p = getattr(self.plots, plot_type)()
             self.plots_created.append(p)
 
