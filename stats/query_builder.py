@@ -3,7 +3,6 @@ from typing import List, Tuple, Dict
 import numpy as np
 
 
-AGGR_TYPES = ['avg', 'sum', 'min', 'max', 'count']
 OPERAND_MAP = {'eq': '=',
                'ne': '!=',
                'gt': '>',
@@ -12,6 +11,13 @@ OPERAND_MAP = {'eq': '=',
                'le': '<=',
                'in': 'IN',
                'nin': 'NOT IN'}
+
+AGGR_MAP = {"avg": "AVG(",
+            "sum": "SUM(",
+            "min": "MIN(",
+            "max": "MAX(",
+            "count": "COUNT(",
+            "count_distinct": "COUNT(DISTINCT "}
 
 
 class _QueryBuilder:
@@ -88,14 +94,15 @@ class _QueryBuilder:
     def aggregation(self, aggregation):
         """
         Aggregation checks:
-        - cant be outside of AGGR_TYPES
+        - cant be outside of AGGR_MAP
         - cant be empty (at least for now)
         """
         if aggregation is None:
             raise WrongAggregationException(f"Aggregation cant be empty")
 
-        if aggregation not in AGGR_TYPES:
-            raise WrongAggregationException(f"Aggregation {aggregation} has invalid value. Use one of {AGGR_TYPES}")
+        if aggregation not in AGGR_MAP:
+            raise WrongAggregationException(f"""Aggregation {aggregation} has invalid value. 
+            Use one of {list(AGGR_MAP.keys())}""")
         self._aggregation = aggregation
 
     @dimensions.setter
@@ -300,9 +307,9 @@ class _QueryBuilder:
 
         if self.aggregation is not None:
             self.logger.info(f"Grouping {self.metrics} by {self.dimensions}. Aggregation: {self.aggregation}")
-
+            aggr_str = AGGR_MAP[self.aggregation]
             group_by_str = f" {group_by_pre_str}{dim_str} "
-            metrics_str = ', '.join([f"{self.aggregation}({m}) AS {m}" for m in self.metrics])
+            metrics_str = ', '.join([f"{aggr_str}{m}) AS {m}" for m in self.metrics])
 
             select_values_str = f" {dim_str}{comma_str}{metrics_str} "
             return select_values_str, group_by_str
