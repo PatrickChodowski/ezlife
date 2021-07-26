@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import logging
 from typing import List, Tuple
+import itertools
 
 matplotlib.use('tkagg')
 
@@ -20,11 +21,15 @@ class _Plots:
                  df: pd.DataFrame,
                  dimensions: List[str],
                  metrics: List[str],
+                 aggregations: List[str],
                  logger: logging.Logger):
 
         self.df = df
         self.dimensions = dimensions
         self.metrics = metrics
+        self.aggregations = aggregations
+
+        self.metric_cols = self._get_possible_metrics()
         self.logger = logger
 
     def _prep_x_y(self) -> Tuple[str, str]:
@@ -42,7 +47,7 @@ class _Plots:
             x = self.dimensions[0]
 
         # picking first metric only (I allow only one metric per bar plot)
-        y = self.metrics[0]
+        y = self.metric_cols[0]
         return x, y
 
     def bar(self) -> None:
@@ -100,5 +105,13 @@ class _Plots:
         #axes.set_title('Boxplot for precalculated statistics', fontsize=fs)
         plt.show()
 
-
-
+    def _get_possible_metrics(self) -> list:
+        """
+        Generates list of possible metrics
+        cartesian product of aggregations and metrics
+        :return: List of possible metrics
+        """
+        possible_metrics = list()
+        for t in set(itertools.product(self.aggregations, self.metrics)):
+            possible_metrics.append(f"{t[0]}_{t[1]}")
+        return possible_metrics

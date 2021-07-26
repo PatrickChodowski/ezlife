@@ -25,7 +25,7 @@ class GBQData:
         # used to move data from .set() to .get() method
         self.dimensions = None
         self.metrics = None
-        self.aggregation = None
+        self.aggregations = None
 
         # to access plots 'machine' ;d
         self.plots = None
@@ -101,7 +101,7 @@ class GBQData:
     def set(self,
             dimensions: List[str] = None,
             metrics: List[str] = None,
-            aggregation: str = None,
+            aggregations: List[str] = None,
             sort: Tuple[str, str] = None,
             filters: List[Tuple] = None,
             limit: int = None
@@ -125,7 +125,7 @@ class GBQData:
                                            cols=self.cols,
                                            dimensions=dimensions,
                                            metrics=metrics,
-                                           aggregation=aggregation,
+                                           aggregations=aggregations,
                                            sort=sort,
                                            filters=filters,
                                            limit=limit)
@@ -133,7 +133,7 @@ class GBQData:
         self.query = self.query_builder.glue_query()
         self.dimensions = dimensions
         self.metrics = metrics
-        self.aggregation = aggregation
+        self.aggregations = aggregations
 
     def get(self, plot_type: str = None) -> pd.DataFrame:
         """
@@ -150,6 +150,7 @@ class GBQData:
             self.plots = _Plots(df=df,
                                 dimensions=self.dimensions,
                                 metrics=self.metrics,
+                                aggregations=self.aggregations,
                                 logger=self.logger)
             p = getattr(self.plots, plot_type)()
             self.plots_created.append(p)
