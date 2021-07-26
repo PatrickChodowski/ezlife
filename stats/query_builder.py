@@ -1,9 +1,9 @@
 import logging
 from typing import List, Tuple, Dict
+import numpy as np
 
 
-AGGR_TYPES = ['mean', 'sum', 'min', 'max', 'count', 'first', 'last', 'median', 'std', 'var', 'mad']
-OPERAND_TYPES = ['eq', 'ne', 'gt', 'lt', 'ge', 'le', 'in', 'nin']
+AGGR_TYPES = ['avg', 'sum', 'min', 'max', 'count']
 OPERAND_MAP = {'eq': '=',
                'ne': '!=',
                'gt': '>',
@@ -44,6 +44,7 @@ class _QueryBuilder:
         self.sort = sort
         self.logger = logger
         self.filters = filters
+
 
     @property
     def aggregation(self):
@@ -104,9 +105,6 @@ class _QueryBuilder:
                     raise WrongFieldName(f"Y Field {y} not in data source columns")
         self._metrics = metrics
 
-
-
-
     def _filter_data(self) -> List[str]:
         # column_name
         # operands = ['eq','gt','lt','ge','le', 'ne', 'in', 'nin']
@@ -132,9 +130,9 @@ class _QueryBuilder:
                 if col not in self.cols:
                     raise WrongFilterException(f"Filter index [{index}] column {col} not found in source df")
 
-                if operand not in OPERAND_TYPES:
+                if operand not in OPERAND_MAP:
                     raise WrongFilterException(
-                        f"Filter index [{index}] operand {operand} is not one of {OPERAND_TYPES}")
+                        f"Filter index [{index}] operand {operand} is not one of {list(OPERAND_MAP.keys())}")
 
                 if (operand in ['in', 'nin']) & (not isinstance(values, list)):
                     raise WrongFilterException(
@@ -142,7 +140,8 @@ class _QueryBuilder:
 
                 if (operand not in ['in', 'nin']) & (not isinstance(values, (int, float, str, np.int, np.float))):
                     raise WrongFilterException(
-                        f"Filter index [{index}] values for operands ['eq','ne','gt','ge','le', 'lt'] has to be one of [int, float, str, np.int, np.float")
+                        f"""Filter index [{index}] values for operands ['eq','ne','gt','ge','le', 'lt'] 
+                        has to be one of [int, float, str, np.int, np.float""")
 
                 self.logger.info(f"Applying filter index[{index}]: {col} {operand} {values}")
 
@@ -151,7 +150,6 @@ class _QueryBuilder:
                     if isinstance(values, str):
                         qstr = "'"
                     filter_str = f'AND {col} {OPERAND_MAP[operand]} {qstr}{values}{qstr} '
-
 
                 elif operand in ['in', 'nin']:
                     if isinstance(values[0], str):
@@ -164,16 +162,22 @@ class _QueryBuilder:
         else:
             return list()
 
-
     def _aggr_data(self) -> Tuple[str, str]:
+        dim_str = ','.join(self.dimensions)
+        comma_str = ", " if dim_str != "" else ""
+
         if self.aggregation is not None:
-            self.logger.info(f"Grouping {self.y} by {self.x}. Aggregation: {self.aggregation}")
-            group_by_str = f" GROUP BY {self.x} "
-            select_values_str = f" {self.x}, {self.aggregation}({self.y}) AS {self.y} "
+            self.logger.info(f"Grouping {self.metrics} by {self.dimensions}. Aggregation: {self.aggregation}")
+
+            group_by_str = f" GROUP BY {dim_str} "
+            metrics_str = ', '.join([f"{self.aggregation}({m}) AS {m}" for m in self.metrics])
+
+            select_values_str = f" {dim_str}{comma_str}{metrics_str} "
             return group_by_str, select_values_str
         else:
+            not_aggr_metrics_str = ','.join(self.metrics)
             group_by_str = ''
-            select_values_str = f" {self.x}, {self.y} "
+            select_values_str = f" {dim_str}{comma_str}{not_aggr_metrics_str} "
             return group_by_str, select_values_str
 
     def _sort_data(self) -> str:
@@ -184,25 +188,24 @@ class _QueryBuilder:
         else:
             return ''
 
-
-
-    def _glue_query(self) -> str:
+    def glue_query(self) -> str:
         list_of_str_filters = self._filter_data()
         group_by_str, select_val_str = self._aggr_data()
         sort_by_str = self._sort_data()
 
         filter_str = "".join(list_of_str_filters)
 
-        query = f"""SELECT {select_val_str} 
-        FROM {self.project_id}
+        query = f"""
+        SELECT {select_val_str} 
+        FROM `{self.project_id}.{self.dataset_id}.{self.table_id}`
         WHERE 1=1
-        {filter_str} 
-        {group_by_str} {sort_by_str}"""
+            {filter_str} 
+            {group_by_str} 
+            {sort_by_str}"""
         self.logger.info("Final query: ")
         self.logger.info(query)
 
         return query
-
 
 
 class WrongAggregationException(Exception):

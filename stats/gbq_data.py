@@ -4,6 +4,7 @@ import re
 import os
 from typing import Dict, List, Tuple
 from .query_builder import _QueryBuilder
+import pandas as pd
 
 
 
@@ -19,14 +20,9 @@ class GBQData:
         self.sa_path = sa_path
         self.gbq_path = gbq_path
 
-        # setup inside gbq_path setter if path is correct
-        self.project_id = None
-        self.dataset_id = None
-        self.table_id = None
-        self.gbq = None
-
-        self.cols = None
+        # Query attributes
         self.query_builder = None
+        self.query = None
 
     @property
     def sa_path(self):
@@ -86,12 +82,10 @@ class GBQData:
                        sa_credentials=self.sa_path,
                        logger=self.logger)
 
-
     def _get_table_cols_dict(self) -> Dict[str, str]:
         #self.gbq.get_table_schema returns pd.DataFrame
         cols_df = self.gbq.get_table_schema(dataset_id=self.dataset_id, table_id=self.table_id)
         return cols_df.set_index('column_name').to_dict()['data_type']
-
 
     def set(self,
             dimensions: List[str] = None,
@@ -99,23 +93,33 @@ class GBQData:
             aggregation: str = None,
             sort: str = None,
             filters: List[Tuple[str, str, None]] = None
-            ):
+            ) -> None:
         """
         Sets data params to query builder
-        :return:
+        :return: Query string to send
         """
 
         self.query_builder = _QueryBuilder(project_id=self.project_id,
                                            dataset_id=self.dataset_id,
                                            table_id=self.table_id,
                                            logger=self.logger,
+                                           cols=self.cols,
                                            dimensions=dimensions,
                                            metrics=metrics,
                                            aggregation=aggregation,
                                            sort=sort,
                                            filters=filters)
 
+        self.query = self.query_builder.glue_query()
 
+    def get(self, what: str):
+        """
+        What - either numbers or plot
+        :param what:
+        :return:
+        """
+        df = self.gbq.get_data(query=self.query)
+        print(df)
 
 
 

@@ -5,7 +5,6 @@ from google.cloud import bigquery
 from google.oauth2 import service_account
 
 
-
 class GBQ:
     def __init__(self,
                  project_id: str,
@@ -87,7 +86,8 @@ class GBQ:
         """
 
         self.logger.info(f"Getting table schema for {self.project_id}.{dataset_id}.{table_id}")
-        query = f"""SELECT 
+        query = f"""
+        SELECT 
                 column_name, 
                 data_type
          FROM  `{self.project_id}.{dataset_id}.INFORMATION_SCHEMA.COLUMNS` 
@@ -138,7 +138,6 @@ class GBQ:
         )
         r = job.result()
 
-
     def check_if_table_exists(self, dataset_id: str, table_id: str) -> bool:
         """
         Method checking if given table exists
@@ -153,8 +152,6 @@ class GBQ:
         except NotFound:
             table_exists = False
         return table_exists
-
-
 
     def write_data(self, df: pd.DataFrame, dataset_id: str, table_id: str, if_exists: str = 'append') -> None:
         """
