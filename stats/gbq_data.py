@@ -5,16 +5,15 @@ import os
 from typing import Dict, List, Tuple
 from .query_builder import _QueryBuilder
 import pandas as pd
-
+from stats.utils import get_logger
 
 
 class GBQData:
     def __init__(self,
                  gbq_path: str,
-                 sa_path: str,
-                 logger: logging.Logger):
+                 sa_path: str):
 
-        self.logger = logger
+        self.logger = get_logger('stats')
 
         # needed to check credentials first, gbq_path will check if table exist and needs connection ready
         self.sa_path = sa_path
