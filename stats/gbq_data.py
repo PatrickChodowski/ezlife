@@ -2,6 +2,9 @@ from .utils import GBQ
 import logging
 import re
 import os
+from typing import Dict, List, Tuple
+from .query_builder import _QueryBuilder
+
 
 
 class GBQData:
@@ -21,6 +24,9 @@ class GBQData:
         self.dataset_id = None
         self.table_id = None
         self.gbq = None
+
+        self.cols = None
+        self.query_builder = None
 
     @property
     def sa_path(self):
@@ -67,6 +73,9 @@ class GBQData:
         if not self.gbq.check_if_table_exists(dataset_id=self.dataset_id, table_id=self.table_id):
             raise GBQTableNotExistException(f'GBQ table {gbq_path} doesnt exist')
 
+        # returning dictionary of table column names and types
+        self.cols = self._get_table_cols_dict()
+
         self._gbq_path = gbq_path
 
     def _setup_gbq(self) -> None:
@@ -76,6 +85,36 @@ class GBQData:
         self.gbq = GBQ(project_id=self.project_id,
                        sa_credentials=self.sa_path,
                        logger=self.logger)
+
+
+    def _get_table_cols_dict(self) -> Dict[str, str]:
+        #self.gbq.get_table_schema returns pd.DataFrame
+        cols_df = self.gbq.get_table_schema(dataset_id=self.dataset_id, table_id=self.table_id)
+        return cols_df.set_index('column_name').to_dict()['data_type']
+
+
+    def set(self,
+            dimensions: List[str] = None,
+            metrics: List[str] = None,
+            aggregation: str = None,
+            sort: str = None,
+            filters: List[Tuple[str, str, None]] = None
+            ):
+        """
+        Sets data params to query builder
+        :return:
+        """
+
+        self.query_builder = _QueryBuilder(project_id=self.project_id,
+                                           dataset_id=self.dataset_id,
+                                           table_id=self.table_id,
+                                           logger=self.logger,
+                                           dimensions=dimensions,
+                                           metrics=metrics,
+                                           aggregation=aggregation,
+                                           sort=sort,
+                                           filters=filters)
+
 
 
 
