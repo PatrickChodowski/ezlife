@@ -1,5 +1,4 @@
 from .utils import GBQ
-import logging
 import re
 import os
 from typing import Dict, List, Tuple
@@ -113,14 +112,14 @@ class GBQData:
 
         self.query = self.query_builder.glue_query()
 
-    def get(self, what: str):
+    def get(self, what: str) -> pd.DataFrame:
         """
         What - either numbers or plot
         :param what:
         :return:
         """
         df = self.gbq.get_data(query=self.query)
-        print(df)
+        return df
 
 
 

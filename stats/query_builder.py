@@ -101,7 +101,7 @@ class _QueryBuilder:
 
     @limit.setter
     def limit(self, limit):
-        if not None:
+        if limit is not None:
             if not isinstance(limit, (int, np.int)):
                 raise WrongLimitValue("Limit has to be of INT type")
 
@@ -206,7 +206,7 @@ class _QueryBuilder:
 
     def _limit_data(self) -> str:
         if self.limit is not None:
-            return f"LIMIT {self.limit}"
+            return f" LIMIT {self.limit}"
         else:
             return ''
 
