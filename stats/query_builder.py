@@ -13,7 +13,7 @@ class _QueryBuilder:
                  logger: logging.Logger,
                  dimensions: List[str] = None,
                  metrics: List[str] = None,
-                 aggregation: str = None,
+                 aggregation: List[str] = None,
                  sort: Tuple[str, str] = None,
                  filters: List[Tuple] = None,
                  limit: int = None
@@ -42,7 +42,7 @@ class _QueryBuilder:
         # query parameters
         self.dimensions = dimensions
         self.metrics = metrics
-        self.aggregation = aggregation
+        self.aggregations = aggregations
         self.sort = sort
         self.logger = logger
         self.filters = filters
@@ -50,8 +50,8 @@ class _QueryBuilder:
 
     # properties:
     @property
-    def aggregation(self):
-        return self._aggregation
+    def aggregations(self):
+        return self._aggregations
 
     @property
     def dimensions(self):
@@ -74,20 +74,32 @@ class _QueryBuilder:
         return self._sort
 
     # setters:
-    @aggregation.setter
-    def aggregation(self, aggregation):
+    @aggregations.setter
+    def aggregations(self, aggregations):
         """
-        Aggregation checks:
+        Aggregations checks:
+        - have to be a list of strings
+        - cant be empty list
         - cant be outside of AGGR_MAP
-        - cant be empty (at least for now)
+        - Window functions cant go together with non window functions
         """
-        if aggregation is None:
-            raise WrongAggregationException(f"Aggregation cant be empty")
+        if aggregations is None:
+            raise WrongAggregationException(f"Aggregations cant be empty")
 
-        if aggregation not in AGGR_MAP:
-            raise WrongAggregationException(f"""Aggregation {aggregation} has invalid value. 
-            Use one of {list(AGGR_MAP.keys())}""")
-        self._aggregation = aggregation
+        if not isinstance(aggregations, list):
+            raise WrongAggregationException(f"Aggregations have to be a list")
+
+        _window_aggrs = set(aggregations).intersection(set(WINDOW_AGGRS))
+        if _window_aggrs.__len__() < aggregations.__len__():
+            _non_window_aggrs = set(aggregations) - _window_aggrs
+            raise WrongAggregationException(f"""Window function based aggregations ({_window_aggrs})
+            cant go with non-window function based ones ({_non_window_aggrs}) """)
+
+        for aggr in aggregations:
+            if aggr not in AGGR_MAP:
+                raise WrongAggregationException(f"""Aggregation {aggr} has invalid value. 
+                Use one of {list(AGGR_MAP.keys())}""")
+        self._aggregations = aggregations
 
     @dimensions.setter
     def dimensions(self, dimensions):
