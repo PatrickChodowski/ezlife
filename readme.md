@@ -6,12 +6,12 @@ Small personal library for sending quick queries to GBQ and getting back aggrega
 pip:
 
 ```commandline
-pip3 install git+https://github.com/PatrickChodowski/stats.git/main
+pip3 install git+https://github.com/PatrickChodowski/stats.git
 ```
 
 poetry:
 ```commandline
-poetry add git+https://github.com/PatrickChodowski/stats.git/main
+poetry add git+https://github.com/PatrickChodowski/stats.git
 ```
 
 
