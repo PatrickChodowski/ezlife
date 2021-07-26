@@ -148,4 +148,28 @@ class GBQDataGetTests(unittest.TestCase):
                    limit=10)
         assert isinstance(self.g.get(''), pd.DataFrame)
 
+    def test_simple_group_max_double_filter(self):
+        self.g.set(dimensions=['team_abbreviation'],
+                   metrics=['pts'],
+                   aggregation='avg',
+                   filters=[('fga', 'ge', 1),
+                            ('pts', 'lt', 40)])
+        assert isinstance(self.g.get(''), pd.DataFrame)
+
+    def test_simple_group_max_triple_filter(self):
+        self.g.set(dimensions=['team_abbreviation'],
+                   metrics=['pts'],
+                   aggregation='avg',
+                   filters=[('fga', 'ge', 1),
+                            ('pts', 'lt', 40),
+                            ('mins', 'ge', 1)
+                            ])
+        assert isinstance(self.g.get(''), pd.DataFrame)
+
+    def test_simple_max_no_dimension(self):
+        self.g.set(dimensions=None,
+                   metrics=['pts'],
+                   aggregation='avg')
+        assert isinstance(self.g.get(''), pd.DataFrame)
+
 

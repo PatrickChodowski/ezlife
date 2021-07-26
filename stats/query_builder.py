@@ -72,20 +72,20 @@ class _QueryBuilder:
 
     @dimensions.setter
     def dimensions(self, dimensions):
+        if dimensions is not None:
+            if not isinstance(dimensions, list):
+                raise NotAListException("Dimensions have to be of type List")
 
-        if not isinstance(dimensions, list):
-            raise NotAListException("Dimensions have to be of type List")
+            if dimensions.__len__() < 1:
+                raise EmptyListException("Dimensions list have to have at least one dimension inside")
 
-        if dimensions.__len__() < 1:
-            raise EmptyListException("Dimensions list have to have at least one dimension inside")
+            for x in dimensions:
+                if x is None:
+                    raise WrongFieldName(f"Empty dimension value")
 
-        for x in dimensions:
-            if x is None:
-                raise WrongFieldName(f"Empty dimension value")
-
-            if x is not None:
-                if x not in self.cols:
-                    raise WrongFieldName(f"X Field {x} not in data source columns")
+                if x is not None:
+                    if x not in self.cols:
+                        raise WrongFieldName(f"X Field {x} not in data source columns")
         self._dimensions = dimensions
 
     @metrics.setter
@@ -168,13 +168,19 @@ class _QueryBuilder:
             return list()
 
     def _aggr_data(self) -> Tuple[str, str]:
-        dim_str = ','.join(self.dimensions)
-        comma_str = ", " if dim_str != "" else ""
+        if self.dimensions is not None:
+            dim_str = ','.join(self.dimensions)
+            comma_str = ", "
+            group_by_pre_str = "GROUP BY "
+        else:
+            dim_str = ""
+            comma_str = ""
+            group_by_pre_str = ""
 
         if self.aggregation is not None:
             self.logger.info(f"Grouping {self.metrics} by {self.dimensions}. Aggregation: {self.aggregation}")
 
-            group_by_str = f" GROUP BY {dim_str} "
+            group_by_str = f" {group_by_pre_str}{dim_str} "
             metrics_str = ', '.join([f"{self.aggregation}({m}) AS {m}" for m in self.metrics])
 
             select_values_str = f" {dim_str}{comma_str}{metrics_str} "
@@ -199,6 +205,10 @@ class _QueryBuilder:
 
             if self.sort[0] not in self.cols:
                 raise WrongSortFieldNameException(f"Invalid sort column ({self.sort[0]}). Not found in columns")
+
+            if (self.sort[0] not in self.metrics) & (self.sort[0] not in self.dimensions):
+                raise WrongSortFieldNameException(f"""Invalid sort column ({self.sort[0]}). 
+                Not found in dimensions or metrics""")
 
             return f" ORDER BY {self.sort[0]} {self.sort[1].upper()} "
         else:
