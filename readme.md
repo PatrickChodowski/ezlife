@@ -64,7 +64,6 @@ instead of learning it already when plot is created.
 - var
 
 ### Plot options:
-- bar chart
-
-:( will be more
-  
+- bar chart 
+- horizontal bar chart
+- box plot
