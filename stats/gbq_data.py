@@ -81,7 +81,11 @@ class GBQData:
                        logger=self.logger)
 
     def _get_table_cols_dict(self) -> Dict[str, str]:
-        #self.gbq.get_table_schema returns pd.DataFrame
+        """
+        Gets given table metadata (columns and datatypes)
+        :return: Dictionary of [column, datatype]
+        """
+        # self.gbq.get_table_schema returns pd.DataFrame
         cols_df = self.gbq.get_table_schema(dataset_id=self.dataset_id, table_id=self.table_id)
         return cols_df.set_index('column_name').to_dict()['data_type']
 
@@ -94,7 +98,14 @@ class GBQData:
             limit: int = None
             ) -> None:
         """
-        Sets data params to query builder
+        Builds _QueryBuilder, by sending all parameters needed for a query:
+
+        :param dimensions: List of column dimensions (will be serving as groups) ['a','b']
+        :param metrics: List of metrics to be aggregated (has to have at least one) ['c']
+        :param aggregation: Aggregation type - one of [sum, avg, min, max, count]
+        :param sort: Tuple of column name and ordering direction ('a', asc)
+        :param filters: List of tuples of (column, operation, value(s))
+        :param limit: Limit of how many rows to return from query
         :return: Query string to send
         """
 
@@ -114,6 +125,9 @@ class GBQData:
 
     def get(self, what: str = None) -> pd.DataFrame:
         """
+        Placeholder method for now.
+        Sends self.query to gbq and retrieves pandas DF
+
         What - either numbers or plot
         :param what:
         :return:
