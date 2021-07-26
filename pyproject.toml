@@ -8,10 +8,7 @@ authors = ["patrick <chodowski.patrick@gmail.com>"]
 python = ">=3.8,<3.10"
 pandas = "^1.3.0"
 matplotlib = "^3.4.2"
-seaborn = "^0.11.1"
-bokeh = "^2.3.3"
 google-cloud-bigquery = "^2.22.1"
-PyQt5 = "5.9.2"
 
 [tool.poetry.dev-dependencies]
 
