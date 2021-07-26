@@ -1,6 +1,6 @@
 import unittest
 import pandas as pd
-from stats.gbq_data import GBQData
+from stats import GBQData
 
 
 class GBQDataGetTests(unittest.TestCase):
