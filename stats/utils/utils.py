@@ -22,6 +22,11 @@ AGGR_MAP = {"avg": "AVG(__metric__)",
             "array_agg_distinct": "ARRAY_AGG(DISTINCT __metric__)",
             "median": "PERCENTILE_CONT(__metric__, 0.5) __over__",
             "q1": "PERCENTILE_CONT(__metric__, 0.25) __over__",
-            "q3": "PERCENTILE_CONT(__metric__, 0.75) __over__"}
+            "q3": "PERCENTILE_CONT(__metric__, 0.75) __over__",
+            "stdev": "STDDEV_POP(__metric_) __over__",
+            "var": "VAR_POP(__metric_) __over__"
+            }
 
-WINDOW_AGGRS = ["q1", "median", "q3"]
+WINDOW_AGGRS = ["q1", "median", "q3", "stdev", "var"]
+
+PLOT_TYPES = ["bar"]

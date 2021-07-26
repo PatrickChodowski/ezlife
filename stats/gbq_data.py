@@ -1,10 +1,10 @@
-from .utils import GBQ
+from .utils import GBQ, get_logger, PLOT_TYPES
+from .query_builder import _QueryBuilder
+from .plots import _Plots
 import re
 import os
 from typing import Dict, List, Tuple
-from .query_builder import _QueryBuilder
 import pandas as pd
-from stats.utils import get_logger
 
 
 class GBQData:
@@ -21,6 +21,15 @@ class GBQData:
         # Query attributes
         self.query_builder = None
         self.query = None
+
+        # used to move data from .set() to .get() method
+        self.dimensions = None
+        self.metrics = None
+        self.aggregation = None
+
+        # to access plots 'machine' ;d
+        self.plots = None
+        self.plots_created = list()
 
     @property
     def sa_path(self):
@@ -122,17 +131,26 @@ class GBQData:
                                            limit=limit)
 
         self.query = self.query_builder.glue_query()
+        self.dimensions = dimensions
+        self.metrics = metrics
+        self.aggregation = aggregation
 
-    def get(self, what: str = None) -> pd.DataFrame:
+    def get(self, plot_type: str = None) -> pd.DataFrame:
         """
         Placeholder method for now.
         Sends self.query to gbq and retrieves pandas DF
 
-        What - either numbers or plot
-        :param what:
-        :return:
+        :param plot_type: Type of plot to show, one of: ['bar']
+        :return: DataFrame with raw data as it can be useful too
         """
         df = self.gbq.get_data(query=self.query)
+        # print(df.head())
+
+        if plot_type in PLOT_TYPES:
+            self.plots = _Plots(df=df, x=self.dimensions[0], y=self.metrics[0])
+            p = getattr(self.plots, plot_type)()
+            self.plots_created.append(p)
+
         return df
 
 

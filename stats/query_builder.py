@@ -1,7 +1,7 @@
+from .utils import WINDOW_AGGRS, OPERAND_MAP, AGGR_MAP
 import logging
 from typing import List, Tuple, Dict
 import numpy as np
-from .utils import WINDOW_AGGRS, OPERAND_MAP, AGGR_MAP
 
 
 class _QueryBuilder:
