@@ -184,4 +184,16 @@ class GBQDataGetTests(unittest.TestCase):
                    aggregation='count_distinct')
         assert isinstance(self.g.get(), pd.DataFrame)
 
+    def test_simple_count_nulls_no_dimension(self):
+        self.g.set(dimensions=None,
+                   metrics=['comment'],
+                   aggregation='count_nulls')
+        assert isinstance(self.g.get(), pd.DataFrame)
+
+    def test_simple_count_nulls_dimension(self):
+        self.g.set(dimensions=['team_abbreviation'],
+                   metrics=['comment'],
+                   aggregation='count_nulls')
+        assert isinstance(self.g.get(), pd.DataFrame)
+
 
