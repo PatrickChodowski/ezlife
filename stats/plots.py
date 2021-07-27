@@ -2,7 +2,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import pandas as pd
 import logging
-from typing import List, Tuple
+from typing import List, Union
 import itertools
 
 matplotlib.use('tkagg')
@@ -33,22 +33,22 @@ class _Plots:
         self.metric_cols = self._get_possible_metrics()
         self.logger = logger
 
-    def _prep_x_y(self) -> Tuple[str, str]:
+    def _prep_groups(self) -> Union[str, None]:
         """
-        Prepares data for category X metric plot (bar, barh, boxplot)
-        return Tuple with x and y (x,y)
+        Prepares data for category. If none, returns empty string
+        return Name of the grouping column or None if there is no dimensions
         """
         # if dimensions length are over 1 then they get concatenated into 'group'
-        if self.dimensions.__len__() > 1:
-            x = 'group'
-            self.df[x] = self.df[self.dimensions].agg('-'.join, axis=1)
+        if self.dimensions is not None:
+            if self.dimensions.__len__() > 1:
+                x = 'group'
+                self.df[x] = self.df[self.dimensions].agg('-'.join, axis=1)
+            else:
+                # if not, just using provided dimension
+                x = self.dimensions[0]
+            return x
         else:
-            # if not, just using provided dimension
-            x = self.dimensions[0]
-
-        # picking first metric only (I allow only one metric per bar plot)
-        y = self.metric_cols[0]
-        return x, y
+            return None
 
     def bar(self) -> None:
         """
@@ -57,7 +57,11 @@ class _Plots:
         - self.dimensions: concat of dimensions
         - self.metrics: picks the first one
         """
-        x, y = self._prep_x_y()
+        x = self._prep_groups()
+        if x is None:
+            raise PlotRequiresCategoryException("No dimension provided for barchart")
+
+        y = self.metric_cols[0]
         self.logger.info(f"Bar Plot with x: {x} and y: {y}")
 
         # rotate labels if too many groups
@@ -73,7 +77,11 @@ class _Plots:
         - self.dimensions: concat of dimensions
         - self.metrics: picks the first one
         """
-        x, y = self._prep_x_y()
+        x = self._prep_groups()
+        if x is None:
+            raise PlotRequiresCategoryException("No dimension provided for barchart")
+
+        y = self.metric_cols[0]
         self.logger.info(f"Bar Plot with x: {x} and y: {y}")
         self.df.plot.barh(x=x,
                           y=y,
@@ -89,12 +97,9 @@ class _Plots:
         if ('median' not in self.aggregations) | ('q1' not in self.aggregations) | ('q3' not in self.aggregations):
             raise BoxplotMissingAggregationsException("Boxplot requires Q1, Median and Q3 in aggregations")
 
-        if self.dimensions.__len__() > 1:
-            x = 'group'
-            self.df[x] = self.df[self.dimensions].agg('-'.join, axis=1)
-        else:
-            # if not, just using provided dimension
-            x = self.dimensions[0]
+        x = self._prep_groups()
+        if x is None:
+            PlotRequiresCategoryException("No dimension provided for boxplot")
 
         # picking first metric
         y = self.metrics[0]
@@ -120,6 +125,30 @@ class _Plots:
         #axes.set_title('Boxplot for precalculated statistics', fontsize=fs)
         plt.show()
 
+    def scatter(self) -> None:
+        """
+        Produces the scatter plot with 2 metrics
+        - self.df: data source
+        - self.dimensions: Used only as a label
+        - self.metrics: picks the first two
+        """
+        if self.metric_cols.__len__() < 2:
+            raise ScatterplotTooFewMetrics(f"""Scatter plot requires at least 2 metrics. 
+            Found ({self.metric_cols.__len__()})""")
+
+        x = self._prep_groups()
+        y1 = self.metric_cols[0]
+        y2 = self.metric_cols[1]
+        self.logger.info(f"Scatter Plot with y1: {y1} and y2: {y2}")
+
+        # labeled version
+        if x is not None:
+            ax = self.df.plot(kind='scatter', x=y1, y=y2)
+            self.df[[y1, y2, x]].apply(lambda row: ax.text(*row), axis=1)
+        else:
+            # non labeled version
+            self.df.plot.scatter(x=y1, y=y2)
+
     def _get_possible_metrics(self) -> list:
         """
         Generates list of possible metrics
@@ -133,4 +162,12 @@ class _Plots:
 
 
 class BoxplotMissingAggregationsException(Exception):
+    pass
+
+
+class ScatterplotTooFewMetrics(Exception):
+    pass
+
+
+class PlotRequiresCategoryException(Exception):
     pass
