@@ -67,3 +67,10 @@ instead of learning it already when plot is created.
 - bar chart 
 - horizontal bar chart
 - box plot
+- scatter plot
+
+
+### Todo:
+- add histogram
+- add line chart
+- allow **kwargs for all chart types
