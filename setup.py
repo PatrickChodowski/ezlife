@@ -8,7 +8,7 @@ setup(
     packages=['stats'],
     install_requires=['matplotlib', 'google-cloud-bigquery', 'pandas', 'numpy'],
     # *strongly* suggested for sharing
-    version='0.6.6',
+    version='0.6.7',
     license='GPLv3',
     description='Module for plotting data straight from GBQ',
     long_description=open('readme.md').read(),

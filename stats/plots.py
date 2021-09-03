@@ -94,8 +94,7 @@ class _Plots:
         Boxplot requires median, q1 and q3 to be added to aggregations
         """
 
-        if ('median' not in self.aggregations) | ('q1' not in self.aggregations) | ('q3' not in self.aggregations)\
-                ('min' not in self.aggregations) | ('max' not in self.aggregations):
+        if (('median' not in self.aggregations) | ('q1' not in self.aggregations) | ('q3' not in self.aggregations) | ('min' not in self.aggregations) | ('max' not in self.aggregations)):
             raise BoxplotMissingAggregationsException("Boxplot requires Q1, Median, Q3, min, max in aggregations")
 
         x = self._prep_groups()
