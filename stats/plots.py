@@ -94,7 +94,8 @@ class _Plots:
         Boxplot requires median, q1 and q3 to be added to aggregations
         """
 
-        if (('median' not in self.aggregations) | ('q1' not in self.aggregations) | ('q3' not in self.aggregations) | ('min' not in self.aggregations) | ('max' not in self.aggregations)):
+        if (('median' not in self.aggregations) | ('q1' not in self.aggregations) | ('q3' not in self.aggregations) |
+                ('min_run' not in self.aggregations) | ('max_run' not in self.aggregations)):
             raise BoxplotMissingAggregationsException("Boxplot requires Q1, Median, Q3, min, max in aggregations")
 
         x = self._prep_groups()
@@ -109,12 +110,12 @@ class _Plots:
         if x is None:
             x = ''
             self.df[x] = 0
-        groups = self.df[[x, f'q1_{y}', f'median_{y}', f'q3_{y}', f'iqr_{y}', f'min_{y}', f'max_{y}']].to_dict('records')
+        groups = self.df[[x, f'q1_{y}', f'median_{y}', f'q3_{y}', f'iqr_{y}', f'min_run_{y}', f'max_run_{y}']].to_dict('records')
         stats = list()
 
         for group in groups:
-            whislo = max([(group[f'q1_{y}'] - (1.5 * group[f'iqr_{y}'])), group[f'min_{y}']])
-            whishi = min([(group[f'q3_{y}'] + (1.5*group[f'iqr_{y}'])), group[f'max_{y}']])
+            whislo = max([(group[f'q1_{y}'] - (1.5 * group[f'iqr_{y}'])), group[f'min_run_{y}']])
+            whishi = min([(group[f'q3_{y}'] + (1.5*group[f'iqr_{y}'])), group[f'max_run_{y}']])
 
             group_dict = {
                 "label": group[x],

@@ -93,6 +93,7 @@ class _QueryBuilder:
             raise WrongAggregationException(f"Aggregations have to be a list")
 
         _window_aggrs = set(aggregations).intersection(set(WINDOW_AGGRS))
+
         if (_window_aggrs.__len__() > 0) & (_window_aggrs.__len__() < aggregations.__len__()):
             _non_window_aggrs = set(aggregations) - _window_aggrs
             raise WrongAggregationException(f"""Window function based aggregations ({_window_aggrs})

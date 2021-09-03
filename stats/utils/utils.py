@@ -23,10 +23,12 @@ AGGR_MAP = {"avg": "AVG(__metric__)",
             "median": "PERCENTILE_CONT(__metric__, 0.5) __over__",
             "q1": "PERCENTILE_CONT(__metric__, 0.25) __over__",
             "q3": "PERCENTILE_CONT(__metric__, 0.75) __over__",
+            "min_run": "MIN(__metric__) __over__",
+            "max_run": "MAX(__metric__) __over__",
             "stdev": "STDDEV_POP(__metric_) __over__",
             "var": "VAR_POP(__metric_) __over__"
             }
 
-WINDOW_AGGRS = ["q1", "median", "q3", "stdev", "var"]
+WINDOW_AGGRS = ["q1", "median", "q3", "stdev", "var", "min_run", "max_run"]
 
 PLOT_TYPES = ["bar", "barh", "boxplot", "scatter"]

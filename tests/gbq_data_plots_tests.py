@@ -37,7 +37,7 @@ class GBQDataPlotTests(unittest.TestCase):
     def test_plot_box_multi_dim_multi_metric(self):
         self.g.set(dimensions=['team_abbreviation', 'player_name'],
                    metrics=['pts', 'fga'],
-                   aggregations=['q1', 'median', 'q3'],
+                   aggregations=['q1', 'median', 'q3', 'min_run', 'max_run'],
                    sort=('median_pts', 'desc'),
                    filters=[('team_abbreviation', 'in', ['DEN', 'LAL', 'LAC', 'MIL', 'UTA'])])
         assert isinstance(self.g.get('boxplot'), pd.DataFrame)
@@ -45,7 +45,7 @@ class GBQDataPlotTests(unittest.TestCase):
     def test_plot_box_multi_dim_single_metric(self):
         self.g.set(dimensions=['team_abbreviation', 'player_name'],
                    metrics=['pts'],
-                   aggregations=['q1', 'median', 'q3'],
+                   aggregations=['q1', 'median', 'q3', 'min_run', 'max_run'],
                    sort=('median_pts', 'desc'),
                    filters=[('team_abbreviation', 'in', ['DEN', 'LAL', 'LAC', 'MIL', 'UTA'])])
         assert isinstance(self.g.get('boxplot'), pd.DataFrame)
@@ -53,7 +53,7 @@ class GBQDataPlotTests(unittest.TestCase):
     def test_plot_box_single_dim_single_metric(self):
         self.g.set(dimensions=['team_abbreviation'],
                    metrics=['pts'],
-                   aggregations=['q1', 'median', 'q3'],
+                   aggregations=['q1', 'median', 'q3', 'min_run', 'max_run'],
                    sort=('median_pts', 'desc'),
                    filters=[('team_abbreviation', 'in', ['DEN', 'LAL', 'LAC', 'MIL', 'UTA'])])
         assert isinstance(self.g.get('boxplot'), pd.DataFrame)
@@ -61,7 +61,7 @@ class GBQDataPlotTests(unittest.TestCase):
     def test_plot_box_single_dim_single_metric_no_sort(self):
         self.g.set(dimensions=['team_abbreviation'],
                    metrics=['pts'],
-                   aggregations=['q1', 'median', 'q3'],
+                   aggregations=['q1', 'median', 'q3', 'min_run', 'max_run'],
                    filters=[('team_abbreviation', 'in', ['DEN', 'LAL', 'LAC', 'MIL', 'UTA'])])
         assert isinstance(self.g.get('boxplot'), pd.DataFrame)
 
