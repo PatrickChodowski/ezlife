@@ -105,6 +105,10 @@ class _Plots:
         y = self.metrics[0]
 
         self.df[f'iqr_{y}'] = self.df[f'q3_{y}'] - self.df[f'q1_{y}']
+
+        if x is None:
+            x = ''
+            self.df[x] = 0
         groups = self.df[[x, f'q1_{y}', f'median_{y}', f'q3_{y}', f'iqr_{y}']].to_dict('records')
         stats = list()
         for group in groups:
