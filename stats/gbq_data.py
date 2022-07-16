@@ -10,9 +10,10 @@ import pandas as pd
 class GBQData:
     def __init__(self,
                  gbq_path: str,
-                 sa_path: str):
+                 sa_path: str,
+                 log_level: str = "info"):
 
-        self.logger = get_logger('stats')
+        self.logger = get_logger('stats', log_level=log_level)
         self.PLOT_TYPES = PLOT_TYPES
 
         # needed to check credentials first, gbq_path will check if table exist and needs connection ready
@@ -148,7 +149,6 @@ class GBQData:
         df = self.gbq.get_data(query=self.query)
         self.df = df
         return df
-
 
     def plot(self, plot_type: str) -> None:
         """

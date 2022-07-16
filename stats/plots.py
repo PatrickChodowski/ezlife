@@ -158,6 +158,55 @@ class _Plots:
             # non labeled version
             self.df.plot.scatter(x=y1, y=y2)
 
+    def hist(self) -> None:
+        """
+        Produces the histogram with one metric
+        - self.df: data source
+        - self.dimensions: used as a group
+        - self.metrics: picks the first one
+        """
+        x = self._prep_groups()
+        y = self.metric_cols[0]
+        self.logger.info(f"Histogram for {y} grouped by {x}")
+        self.df.plot.hist(column=y, by=x)
+
+    def histg(self) -> None:
+        """
+        Groups data into one histogram if there are groups
+        - self.df: data source
+        - self.dimensions: used as a group
+        - self.metrics: picks the first one
+        """
+        x = self._prep_groups()
+        y = self.metric_cols[0]
+        self.df.pivot(columns=x, values=[y]).plot.hist(alpha=0.5)
+    #
+    # def density(self) -> None:
+    #     """
+    #     Produces the density diagram with one metric
+    #     - self.df: data source
+    #     - self.dimensions: used as a group
+    #     - self.metrics: picks the first one
+    #     """
+    #     x = self._prep_groups()
+    #     y = self.metric_cols[0]
+    #     self.logger.info(f"Density for {y} grouped by {x}")
+    #     if x is not None:
+    #         self.df.plot.density(column=y, by=x)
+    #     else:
+    #         self.df.plot.density(column=y)
+
+    # def densityg(self) -> None:
+    #     """
+    #     Groups data into one density if there are groups
+    #     - self.df: data source
+    #     - self.dimensions: used as a group
+    #     - self.metrics: picks the first one
+    #     """
+    #     x = self._prep_groups()
+    #     y = self.metric_cols[0]
+    #     self.df.pivot(columns=x, values=[y]).plot.density(alpha=0.5)
+
     def _get_possible_metrics(self) -> list:
         """
         Generates list of possible metrics

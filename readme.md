@@ -18,12 +18,18 @@ poetry add "git+https://github.com/PatrickChodowski/stats.git#main"
 
 ### Usage:
 
+#### Setup
 ```python
 from stats import GBQData
 
 g = GBQData(gbq_path='project.dataset.table',
             sa_path='credentials/sa.json')
+```
 
+
+#### Aggregated bar chart
+
+```python
 g.set(dimensions=['team_abbreviation', 'player_name'],
       metrics=['pts'],
       aggregations=['sum'],
@@ -31,7 +37,20 @@ g.set(dimensions=['team_abbreviation', 'player_name'],
       filters=[('team_abbreviation', 'eq', 'GUA')],
       limit=30)
 g.get()
+g.plot("barh")
 ```
+
+#### Histogram
+
+```python
+g.set(dimensions=None,
+      metrics=['pts'],
+      aggregations=['none'],
+      filters=[('team_abbreviation', 'eq', 'GUA')])
+g.get()
+g.plot('hist')
+```
+
 
 ### Modules:
 
@@ -60,17 +79,15 @@ instead of learning it already when plot is created.
 - median
 - q1
 - q3
+- percentiles
 - stdev
 - var
+- none (no aggregation)
 
 ### Plot options:
 - bar chart 
 - horizontal bar chart
 - box plot
+- histogram
 - scatter plot
 
-
-### Todo:
-- add histogram
-- add line chart
-- allow **kwargs for all chart types

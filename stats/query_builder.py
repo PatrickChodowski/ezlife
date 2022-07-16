@@ -92,6 +92,10 @@ class _QueryBuilder:
         if not isinstance(aggregations, list):
             raise WrongAggregationException(f"Aggregations have to be a list")
 
+        if "none" in aggregations:
+            if aggregations.__len__() > 1:
+                raise WrongAggregationException(f"If there is 'none' aggregation, it cant be combined with more aggrs")
+
         _window_aggrs = set(aggregations).intersection(set(WINDOW_AGGRS))
 
         if (_window_aggrs.__len__() > 0) & (_window_aggrs.__len__() < aggregations.__len__()):
@@ -305,13 +309,18 @@ class _QueryBuilder:
         if self.dimensions is not None:
             dim_str = ','.join(self.dimensions)
             comma_str = ", "
+
             if is_window_aggr:
                 # have to handle window aggregations (like median) different way
                 partition_by_str = f" OVER(PARTITION BY {dim_str}) "
                 group_by_str = ""
-            else:
+            elif "none" not in self.aggregations:
                 # classic group by
                 group_by_str = f" GROUP BY {dim_str} "
+                partition_by_str = ""
+            else:
+                # elif "none" in self.aggregations:
+                group_by_str = ""
                 partition_by_str = ""
         else:
             dim_str = ""

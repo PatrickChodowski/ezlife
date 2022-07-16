@@ -7,7 +7,8 @@ class GBQDataGetTests(unittest.TestCase):
     def __init__(self, *args, **kwargs):
         super(GBQDataGetTests, self).__init__(*args, **kwargs)
         self.g = GBQData(gbq_path='nbar-264220.nbar_data.traditional',
-                         sa_path='../credentials/nbar.json')
+                         sa_path='../credentials/nbar.json',
+                         log_level="error")
 
     def test_connection(self):
         r = self.g.gbq.get_data('SELECT 1 as test_value')['test_value'][0]
@@ -254,4 +255,36 @@ class GBQDataGetTests(unittest.TestCase):
         self.g.set(dimensions=None,
                    metrics=['pts'],
                    aggregations=['q3'])
+        assert isinstance(self.g.get(), pd.DataFrame)
+
+    def test_simple_noneaggr_metric(self):
+        self.g.set(dimensions=None,
+                   metrics=['pts'],
+                   aggregations=['none'])
+        assert isinstance(self.g.get(), pd.DataFrame)
+        
+    def test_simple_noneaggr_metric_dim(self):
+        self.g.set(dimensions=['team_abbreviation'],
+                   metrics=['pts'],
+                   aggregations=['none'])
+        assert isinstance(self.g.get(), pd.DataFrame)
+
+    def test_multivalue_noneaggr_metric_dim(self):
+        self.g.set(dimensions=['team_abbreviation'],
+                   metrics=['pts', 'ast'],
+                   aggregations=['none'])
+        assert isinstance(self.g.get(), pd.DataFrame)
+
+    def test_multivalue_multidim_noneaggr_metric(self):
+        self.g.set(dimensions=['team_abbreviation', 'player_name'],
+                   metrics=['pts', 'ast'],
+                   aggregations=['none'])
+        assert isinstance(self.g.get(), pd.DataFrame)
+
+    def test_multivalue_multidim_noneaggr_metric_filter(self):
+        self.g.set(dimensions=['team_abbreviation', 'player_name'],
+                   metrics=['pts', 'ast'],
+                   aggregations=['none'],
+                   filters=[('team_abbreviation', 'nin', ['DEN', 'LAL', 'MIL', 'PHX', 'UTA', 'BOS'])]
+                   )
         assert isinstance(self.g.get(), pd.DataFrame)

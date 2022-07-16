@@ -1,14 +1,15 @@
 [tool.poetry]
 name = "stats"
-version = "0.7.0"
-description = ""
+version = "0.8.1"
+description = "Personal package for easier and faster data analysis. Feel free to use and edit as you like"
 authors = ["patrick <chodowski.patrick@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = ">=3.8,<3.10"
-pandas = "^1.3.0"
+pandas = "^1.4.3"
 matplotlib = "^3.4.2"
 google-cloud-bigquery = "^2.22.1"
+scipy = "^1.8.1"
 
 [tool.poetry.dev-dependencies]
 
