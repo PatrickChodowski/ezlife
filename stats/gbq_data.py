@@ -13,6 +13,7 @@ class GBQData:
                  sa_path: str):
 
         self.logger = get_logger('stats')
+        self.PLOT_TYPES = PLOT_TYPES
 
         # needed to check credentials first, gbq_path will check if table exist and needs connection ready
         self.sa_path = sa_path
@@ -30,6 +31,9 @@ class GBQData:
         # to access plots 'machine' ;d
         self.plots = None
         self.plots_created = list()
+
+        # receives data from .get() method
+        self.df = None
 
     @property
     def sa_path(self):
@@ -107,11 +111,11 @@ class GBQData:
             limit: int = None
             ) -> None:
         """
-        Builds _QueryBuilder, by sending all parameters needed for a query:
+        Builds _QueryBuilder, by sending all parameters needed for a query
 
         :param dimensions: List of column dimensions (will be serving as groups) ['a','b']
         :param metrics: List of metrics to be aggregated (has to have at least one) ['c']
-        :param aggregation: Aggregation type - one of [sum, avg, min, max, count]
+        :param aggregations: Aggregation type - one of [sum, avg, min, max, count]
         :param sort: Tuple of column name and ordering direction ('a', asc)
         :param filters: List of tuples of (column, operation, value(s))
         :param limit: Limit of how many rows to return from query
@@ -135,19 +139,25 @@ class GBQData:
         self.metrics = metrics
         self.aggregations = aggregations
 
-    def get(self, plot_type: str = None) -> pd.DataFrame:
+    def get(self) -> pd.DataFrame:
         """
         Placeholder method for now.
         Sends self.query to gbq and retrieves pandas DF
-
-        :param plot_type: Type of plot to show, one of: ['bar']
         :return: DataFrame with raw data as it can be useful too
         """
         df = self.gbq.get_data(query=self.query)
-        # print(df.head())
+        self.df = df
+        return df
 
-        if plot_type in PLOT_TYPES:
-            self.plots = _Plots(df=df,
+
+    def plot(self, plot_type: str) -> None:
+        """
+        Create plot with owned data
+        :param plot_type: One of self.PLOT_TYPES
+        :return: None, opens window with the plot
+        """
+        if plot_type in self.PLOT_TYPES:
+            self.plots = _Plots(df=self.df,
                                 dimensions=self.dimensions,
                                 metrics=self.metrics,
                                 aggregations=self.aggregations,
@@ -155,7 +165,6 @@ class GBQData:
             p = getattr(self.plots, plot_type)()
             self.plots_created.append(p)
 
-        return df
 
 
 class GBQWrongPathPatternException(Exception):
